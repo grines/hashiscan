@@ -8,9 +8,11 @@ Scanning / Exploiting vulnerable hashicorp tools
 - [X] Status (Check if vulnerable
 - [ ] Reverse shell
 - [ ] Custom payload
+- [ ] scanning for vulnerable servers
 
 # Features Nomad (Coming soon)
 - [ ] AWS Meta data extraction
 - [ ] Status (Check if vulnerable
 - [ ] Reverse shell ( Raw_exec/ exec / docker)
 - [ ] Custom payload
+- [ ] scanning for vulnerable servers
