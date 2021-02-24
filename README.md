@@ -1,2 +1,2 @@
-# hashiscan
-Scanning / Exploiting vulnerable hashicorp infra
+# badhashi
+Scanning / Exploiting vulnerable hashicorp tools
