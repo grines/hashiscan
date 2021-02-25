@@ -3,6 +3,9 @@ Scanning / Exploiting vulnerable hashicorp tools
 
 ![](https://github.com/grines/hashiscan/blob/main/badhashi.gif)
 
+
+![](https://github.com/grines/hashiscan/blob/main/badhashi-shell.gif)
+
 # Features Consul
 - [X] AWS Meta data extraction
 - [X] Status (Check if vulnerable
