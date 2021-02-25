@@ -743,7 +743,7 @@ func nc(base string, host string, port string, lport string) {
 	if err != nil {
 		log.Fatalln("Unable to bind to port")
 	}
-	log.Println("Listening on localhost:" + port)
+	log.Println("Listening on localhost:" + lport)
 	for {
 		// Wait for connection. Create net.Conn on connection established.
 		conn, err := listener.Accept()
